@@ -1,11 +1,20 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+// Force IPv4 because Render free tier containers often fail to route IPv6 traffic to Google
+dns.setDefaultResultOrder('ipv4first');
 
 // Configure the email transporter using Environment Variables
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    requireTLS: true,
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
+    },
+    tls: {
+        ciphers:'SSLv3'
     }
 });
 
