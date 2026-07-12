@@ -18,12 +18,16 @@ const processQueue = async () => {
         // We send the check-in immediately upon adding the customer
         const pendingCustomers = await getCustomersByStatus('pending');
         for (const customer of pendingCustomers) {
-            await sendEmail(
-                customer.email,
-                `Just checking in, ${customer.name}`,
-                `Hey ${customer.name}, this is ${clientName} from ${businessName}. Just checking in to make sure everything looks good with the work we did today.`
-            );
-            await updateCustomerStatus(customer.id, 'checkin_sent');
+            try {
+                await sendEmail(
+                    customer.email,
+                    `Just checking in, ${customer.name}`,
+                    `Hey ${customer.name}, this is ${clientName} from ${businessName}. Just checking in to make sure everything looks good with the work we did today.`
+                );
+                await updateCustomerStatus(customer.id, 'checkin_sent');
+            } catch (err) {
+                console.log(`[Scheduler] Skipping status update for ${customer.email} due to email failure.`);
+            }
         }
 
         // 2. Process 'checkin_sent' -> Send Ask -> 'ask_sent'

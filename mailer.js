@@ -29,8 +29,10 @@ const sendEmail = async (to, subject, text) => {
             text: text
         });
         console.log(`✅ Email sent successfully to ${to} (${info.messageId})`);
+        return true;
     } catch (error) {
         console.error(`❌ Failed to send email to ${to}:`, error);
+        throw error; // Throw to caller so status isn't updated falsely
     }
 };
 
