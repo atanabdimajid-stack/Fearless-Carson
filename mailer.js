@@ -5,9 +5,9 @@ dns.setDefaultResultOrder('ipv4first');
 
 // Configure the email transporter using Environment Variables
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Use port 465 with implicit TLS
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: process.env.SMTP_PORT || 465,
+    secure: process.env.SMTP_PORT == 465, // Use implicit TLS only for port 465
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
