@@ -2,8 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initDb, getCustomers, addCustomer } = require('./database');
+const { initDb, getCustomers, addCustomer, getReviews, addReview, saveAiResponse } = require('./database');
 const { processQueue } = require('./scheduler');
+const { generateReviewResponse } = require('./ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Initialize Cloud Database Table
 initDb();
 
-// API Routes
+// --- Customer Routes ---
 app.get('/api/customers', async (req, res) => {
     try {
         const customers = await getCustomers();
@@ -33,6 +34,42 @@ app.post('/api/customers', async (req, res) => {
     try {
         const customer = await addCustomer(name, email);
         res.status(201).json(customer);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- Review Routes ---
+app.get('/api/reviews', async (req, res) => {
+    try {
+        const reviews = await getReviews();
+        res.json(reviews);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Mock endpoint to simulate a customer submitting a review
+app.post('/api/reviews', async (req, res) => {
+    const { customer_id, rating, review_text, customer_name } = req.body;
+    
+    if (!customer_id || !rating || !review_text) {
+        return res.status(400).json({ error: 'Missing review data' });
+    }
+
+    try {
+        // 1. Save the initial review to database
+        const review = await addReview(customer_id, rating, review_text);
+        
+        // 2. Generate personalized AI response asynchronously
+        // We don't block the request so the UI feels fast.
+        generateReviewResponse(customer_name, review_text, rating)
+            .then(aiReply => {
+                // 3. Save the generated AI response back to the database
+                saveAiResponse(review.id, aiReply);
+            });
+
+        res.status(201).json({ message: 'Review saved! AI is generating a response in the background.', review });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

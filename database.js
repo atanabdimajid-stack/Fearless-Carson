@@ -19,9 +19,19 @@ const initDb = async () => {
                 status VARCHAR(50) DEFAULT 'pending',
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+            );
+            
+            CREATE TABLE IF NOT EXISTS reviews (
+                id SERIAL PRIMARY KEY,
+                customer_id INTEGER REFERENCES customers(id),
+                rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+                review_text TEXT NOT NULL,
+                ai_response TEXT,
+                status VARCHAR(50) DEFAULT 'unresponded',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         `);
-        console.log('✅ Connected to Cloud PostgreSQL Database');
+        console.log('✅ Connected to Cloud PostgreSQL Database & Initialized Tables');
     } catch (err) {
         console.error('❌ Error initializing database table:', err);
     }
@@ -52,11 +62,45 @@ const getCustomersByStatus = async (status) => {
     return result.rows;
 };
 
+// --- New Review Functions ---
+
+const getReviews = async () => {
+    const query = `
+        SELECT r.*, c.name as customer_name 
+        FROM reviews r 
+        JOIN customers c ON r.customer_id = c.id 
+        ORDER BY r.created_at DESC
+    `;
+    const result = await pool.query(query);
+    return result.rows;
+};
+
+const addReview = async (customer_id, rating, review_text) => {
+    const result = await pool.query(
+        'INSERT INTO reviews (customer_id, rating, review_text) VALUES ($1, $2, $3) RETURNING *',
+        [customer_id, rating, review_text]
+    );
+    // Mark customer as responded
+    await updateCustomerStatus(customer_id, 'responded');
+    return result.rows[0];
+};
+
+const saveAiResponse = async (review_id, ai_response) => {
+    const result = await pool.query(
+        'UPDATE reviews SET ai_response = $1, status = $2 WHERE id = $3 RETURNING *',
+        [ai_response, 'responded', review_id]
+    );
+    return result.rows[0];
+};
+
 module.exports = {
     pool,
     initDb,
     getCustomers,
     addCustomer,
     updateCustomerStatus,
-    getCustomersByStatus
+    getCustomersByStatus,
+    getReviews,
+    addReview,
+    saveAiResponse
 };

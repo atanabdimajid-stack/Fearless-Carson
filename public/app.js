@@ -1,19 +1,43 @@
-const API_URL = '/api/customers';
+const API_CUSTOMERS = '/api/customers';
+const API_REVIEWS = '/api/reviews';
 
-// Fetch and display customers
+// --- SPA Navigation ---
+document.querySelectorAll('#navMenu a').forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Remove active class from all links and sections
+        document.querySelectorAll('#navMenu a').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        
+        // Add active class to clicked link and corresponding section
+        link.classList.add('active');
+        const targetId = link.getAttribute('data-target');
+        document.getElementById(targetId).classList.add('active');
+
+        // Fetch fresh data when switching tabs
+        if (targetId === 'customers-view') fetchPipeline();
+        if (targetId === 'reviews-view') fetchReviews();
+        if (targetId === 'dashboard-view') fetchCustomers();
+    });
+});
+
+// --- Data Fetching & Rendering ---
+
 async function fetchCustomers() {
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch(API_CUSTOMERS);
         const customers = await response.json();
         
-        const tbody = document.getElementById('customersBody');
+        // Update Dashboard Table
+        const tbody = document.getElementById('dashboardBody');
         tbody.innerHTML = '';
         
         let activeCount = 0;
         let completedCount = 0;
 
         customers.forEach(c => {
-            if (c.status === 'completed') completedCount++;
+            if (c.status === 'completed' || c.status === 'responded') completedCount++;
             else activeCount++;
 
             const row = document.createElement('tr');
@@ -26,72 +50,170 @@ async function fetchCustomers() {
             tbody.appendChild(row);
         });
 
-        // Update stats
+        // Update Stats
         document.getElementById('activeCount').innerText = activeCount;
         document.getElementById('completedCount').innerText = completedCount;
-        // Mocking sent count based on active states for demo purposes
         document.getElementById('sentCount').innerText = (completedCount * 3) + activeCount; 
+
+        // Update Review Modal Dropdown
+        const select = document.getElementById('reviewCustomerSelect');
+        select.innerHTML = customers.map(c => `<option value="${c.id}">${c.name} (${c.email})</option>`).join('');
 
     } catch (error) {
         console.error('Error fetching customers:', error);
     }
 }
 
-// Format status nicely
+async function fetchPipeline() {
+    try {
+        const response = await fetch(API_CUSTOMERS);
+        const customers = await response.json();
+        
+        const board = document.getElementById('pipelineBoard');
+        
+        const columns = [
+            { id: 'pending', title: 'Pending (Wait)' },
+            { id: 'checkin_sent', title: 'Check-in Sent' },
+            { id: 'ask_sent', title: 'Review Ask Sent' },
+            { id: 'nudge_sent', title: 'Nudge Sent' },
+            { id: 'responded', title: 'Responded / Reviewed' }
+        ];
+
+        board.innerHTML = columns.map(col => {
+            const colCustomers = customers.filter(c => c.status === col.id || (col.id === 'nudge_sent' && c.status === 'completed'));
+            return `
+                <div class="pipeline-col">
+                    <div class="col-header">
+                        ${col.title} <span class="col-count">${colCustomers.length}</span>
+                    </div>
+                    <div class="col-body">
+                        ${colCustomers.map(c => `
+                            <div class="pipeline-card">
+                                <strong>${c.name}</strong>
+                                <span>${new Date(c.last_updated).toLocaleDateString()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error fetching pipeline:', error);
+    }
+}
+
+async function fetchReviews() {
+    try {
+        const response = await fetch(API_REVIEWS);
+        const reviews = await response.json();
+        
+        const container = document.getElementById('reviewsContainer');
+        
+        if (reviews.length === 0) {
+            container.innerHTML = `<p style="color: var(--text-muted);">No reviews yet. Simulate one to see the AI working!</p>`;
+            return;
+        }
+
+        container.innerHTML = reviews.map(r => `
+            <div class="review-card">
+                <div class="review-header">
+                    <strong>${r.customer_name}</strong>
+                    <span class="review-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+                </div>
+                <div class="review-text">"${r.review_text}"</div>
+                ${r.ai_response ? `
+                    <div class="ai-response">
+                        <span class="ai-badge">✨ AI Generated Response</span>
+                        ${r.ai_response}
+                    </div>
+                ` : `
+                    <div class="ai-response" style="background: rgba(245, 158, 11, 0.1); border-color: #fcd34d; color: #fcd34d;">
+                        <span class="ai-badge" style="color: #fcd34d;">⏳ Generating...</span>
+                        AI is currently writing a personalized response.
+                    </div>
+                `}
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error fetching reviews:', error);
+    }
+}
+
 function formatStatus(status) {
     const map = {
         'pending': '⏳ Pending',
         'checkin_sent': '✉️ Check-in Sent',
         'ask_sent': '⭐ Ask Sent',
         'nudge_sent': '🔔 Nudge Sent',
-        'completed': '✅ Completed'
+        'completed': '✅ Completed',
+        'responded': '💖 Responded'
     };
     return map[status] || status;
 }
 
-// Modal Logic
-function openModal() {
-    document.getElementById('addModal').classList.add('active');
+// --- Modals ---
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
 }
 
-function closeModal() {
-    document.getElementById('addModal').classList.remove('active');
-    document.getElementById('addForm').reset();
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+    if (id === 'addModal') document.getElementById('addForm').reset();
+    if (id === 'mockReviewModal') document.getElementById('mockReviewForm').reset();
 }
 
-// Form Submission
+// --- Forms ---
 document.getElementById('addForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    const name = document.getElementById('custName').value;
-    const email = document.getElementById('custEmail').value;
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    
-    submitBtn.innerText = 'Adding...';
-    submitBtn.disabled = true;
+    submitBtn.innerText = 'Adding...'; submitBtn.disabled = true;
 
     try {
-        const response = await fetch(API_URL, {
+        await fetch(API_CUSTOMERS, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email })
+            body: JSON.stringify({
+                name: document.getElementById('custName').value,
+                email: document.getElementById('custEmail').value
+            })
         });
-        
-        if (response.ok) {
-            closeModal();
-            fetchCustomers();
-        } else {
-            alert('Error adding customer');
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Failed to connect to server');
+        closeModal('addModal');
+        fetchCustomers();
     } finally {
-        submitBtn.innerText = 'Start Sequence';
-        submitBtn.disabled = false;
+        submitBtn.innerText = 'Start Sequence'; submitBtn.disabled = false;
     }
 });
 
-// Initial fetch and auto-refresh every 2 seconds to see the demo scheduler run live
+document.getElementById('mockReviewForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.innerText = 'Generating AI Reply...'; submitBtn.disabled = true;
+
+    const select = document.getElementById('reviewCustomerSelect');
+    
+    try {
+        await fetch(API_REVIEWS, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customer_id: select.value,
+                customer_name: select.options[select.selectedIndex].text.split(' (')[0],
+                rating: document.getElementById('reviewRating').value,
+                review_text: document.getElementById('reviewText').value
+            })
+        });
+        closeModal('mockReviewModal');
+        fetchReviews(); // Will show "Generating..."
+        
+        // Polling to see the AI response after it finishes in the background
+        setTimeout(fetchReviews, 3000);
+        setTimeout(fetchReviews, 6000);
+    } finally {
+        submitBtn.innerText = 'Submit Review'; submitBtn.disabled = false;
+    }
+});
+
+// Init
 fetchCustomers();
-setInterval(fetchCustomers, 2000);
