@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave a Review</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .feedback-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease;
+        }
+        .stars {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 2rem 0;
+            flex-direction: row-reverse;
+        }
+        .star {
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .star:hover, .star:hover ~ .star, .star.active, .star.active ~ .star {
+            color: #fbbf24;
+        }
+        .review-box {
+            display: none;
+            margin-top: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+        .success-box {
+            display: none;
+            margin-top: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="feedback-container" id="mainContainer">
+        <h1 id="greeting">How was your experience?</h1>
+        <p class="subtitle" style="margin-top: 10px;">We'd love to hear your feedback.</p>
+
+        <!-- Step 1: Rating -->
+        <div class="stars" id="starContainer">
+            <span class="star" data-value="5">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="1">★</span>
+        </div>
+
+        <!-- Step 2: Text Review -->
+        <div class="review-box" id="reviewBox">
+            <div class="form-group">
+                <textarea id="reviewText" rows="5" placeholder="Please share a few words about your experience..."></textarea>
+            </div>
+            <button class="btn primary" id="submitBtn" style="width: 100%;">Submit Feedback</button>
+        </div>
+
+        <!-- Step 3: Success & Google Redirect -->
+        <div class="success-box" id="successBox">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+            <h2>Thank you!</h2>
+            <p style="color: var(--text-muted); margin: 1rem 0;">We appreciate your business. Could you take 10 seconds to copy and paste your review onto our official Google Maps page? It helps us immensely!</p>
+            <button class="btn primary" id="copyGoogleBtn" style="width: 100%; margin-bottom: 10px;">Copy Text & Go to Google</button>
+        </div>
+    </div>
+
+    <script src="feedback.js"></script>
+</body>
+</html>

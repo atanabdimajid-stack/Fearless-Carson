@@ -49,7 +49,7 @@ app.get('/api/reviews', async (req, res) => {
     }
 });
 
-// Mock endpoint to simulate a customer submitting a review
+// Mock endpoint to simulate a customer submitting a review, and also handles real public submissions
 app.post('/api/reviews', async (req, res) => {
     const { customer_id, rating, review_text, customer_name } = req.body;
     
@@ -58,12 +58,19 @@ app.post('/api/reviews', async (req, res) => {
     }
 
     try {
+        // Fetch customer name if it wasn't provided (e.g. from the public feedback page)
+        let finalCustomerName = customer_name;
+        if (!finalCustomerName) {
+            const result = await require('./database').pool.query('SELECT name FROM customers WHERE id = $1', [customer_id]);
+            if (result.rows.length > 0) finalCustomerName = result.rows[0].name;
+            else finalCustomerName = 'Valued Customer';
+        }
+
         // 1. Save the initial review to database
         const review = await addReview(customer_id, rating, review_text);
         
         // 2. Generate personalized AI response asynchronously
-        // We don't block the request so the UI feels fast.
-        generateReviewResponse(customer_name, review_text, rating)
+        generateReviewResponse(finalCustomerName, review_text, rating)
             .then(aiReply => {
                 // 3. Save the generated AI response back to the database
                 saveAiResponse(review.id, aiReply);

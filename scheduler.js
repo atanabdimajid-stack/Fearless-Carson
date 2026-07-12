@@ -5,9 +5,9 @@ const { sendEmail } = require('./mailer');
 const HOURS_2 = 2 * 60 * 60 * 1000;
 const DAYS_3 = 3 * 24 * 60 * 60 * 1000;
 
-const businessName = "ABC Roofing";
-const clientName = "Mike";
-const reviewLink = "https://g.page/r/example/review";
+const businessName = process.env.BUSINESS_NAME || "ABC Roofing";
+const clientName = process.env.CLIENT_NAME || "Mike";
+const BASE_URL = process.env.BASE_URL || "https://review-engine-kdxn.onrender.com";
 
 const processQueue = async () => {
     const now = new Date();
@@ -34,7 +34,7 @@ const processQueue = async () => {
                 await sendEmail(
                     customer.email,
                     `Thank you from ${businessName}`,
-                    `Hi ${customer.name}, ${clientName} here from ${businessName}. Just wanted to say thanks again for the opportunity to work with you. If you have 30 seconds, would you mind sharing your experience in a quick Google review? It helps other customers know they can trust us.\n\n${reviewLink}`
+                    `Hi ${customer.name}, ${clientName} here from ${businessName}. Just wanted to say thanks again for the opportunity to work with you. If you have 30 seconds, would you mind sharing your experience in a quick Google review? It helps other customers know they can trust us.\n\n${BASE_URL}/feedback.html?cid=${customer.id}`
                 );
                 await updateCustomerStatus(customer.id, 'ask_sent');
             }
@@ -48,7 +48,7 @@ const processQueue = async () => {
                 await sendEmail(
                     customer.email,
                     `Following up regarding your review`,
-                    `Just a quick follow-up. If you haven't had a chance yet, we'd really appreciate a quick Google review. It helps others know they can trust us.\n\n${reviewLink}`
+                    `Just a quick follow-up. If you haven't had a chance yet, we'd really appreciate a quick Google review. It helps others know they can trust us.\n\n${BASE_URL}/feedback.html?cid=${customer.id}`
                 );
                 await updateCustomerStatus(customer.id, 'completed'); // End of sequence
             }
