@@ -245,8 +245,8 @@ tbody tr:hover {
 /* Pipeline Board */
 .pipeline-board {
     display: flex;
-    gap: 1.5rem;
-    overflow-x: auto;
+    gap: 1rem;
+    overflow-x: hidden;
     padding-bottom: 1rem;
 }
 
@@ -254,7 +254,7 @@ tbody tr:hover {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
-    min-width: 250px;
+    min-width: 0;
     flex: 1;
     display: flex;
     flex-direction: column;
