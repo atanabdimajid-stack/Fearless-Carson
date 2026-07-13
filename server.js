@@ -71,9 +71,25 @@ app.post('/api/reviews', async (req, res) => {
         
         // 2. Generate personalized AI response asynchronously
         generateReviewResponse(finalCustomerName, review_text, rating)
-            .then(aiReply => {
+            .then(async aiReply => {
                 // 3. Save the generated AI response back to the database
-                saveAiResponse(review.id, aiReply);
+                await saveAiResponse(review.id, aiReply);
+                
+                // 4. Send the AI response to the customer via email
+                try {
+                    const { pool } = require('./database');
+                    const { sendEmail } = require('./mailer');
+                    const result = await pool.query('SELECT email FROM customers WHERE id = $1', [customer_id]);
+                    if (result.rows.length > 0) {
+                        const customerEmail = result.rows[0].email;
+                        const subject = 'Thank you for your review!';
+                        const emailText = `${aiReply}\n\n- Mike from ABC Roofing`;
+                        await sendEmail(customerEmail, subject, emailText);
+                        console.log(`[AI Responder] Response emailed to ${customerEmail}`);
+                    }
+                } catch (emailErr) {
+                    console.error('[AI Responder] Failed to send response email:', emailErr);
+                }
             });
 
         res.status(201).json({ message: 'Review saved! AI is generating a response in the background.', review });
