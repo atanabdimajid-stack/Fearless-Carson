@@ -1,7 +1,8 @@
 const { GoogleGenAI } = require('@google/genai');
 
 const ai = new GoogleGenAI({ 
-    apiKey: process.env.GEMINI_API_KEY 
+    apiKey: process.env.GEMINI_API_KEY,
+    httpOptions: { apiVersion: 'v1' }
 });
 
 /**
@@ -33,7 +34,7 @@ const generateReviewResponse = async (customerName, reviewText, rating) => {
     try {
         console.log(`[AI] Requesting custom response from Gemini for ${customerName}...`);
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-1.5-flash-8b', // Switch to robust 8b model
             contents: prompt,
             config: {
                 temperature: 0.7,
