@@ -1,8 +1,11 @@
 const { Pool } = require('pg');
 
+// Clean the connection string to remove sslmode=require, which causes a noisy security warning in pg v8+
+const connectionString = process.env.DATABASE_URL ? process.env.DATABASE_URL.replace('?sslmode=require', '') : '';
+
 // Initialize the database connection pool using the secure environment variable
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: connectionString,
     ssl: {
         rejectUnauthorized: false // Required for some cloud providers like Neon
     }
