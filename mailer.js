@@ -71,6 +71,7 @@ const sendEmail = async (to, subject, text) => {
         host: host,
         port: port,
         secure: port == 465, // Use implicit TLS only for port 465
+        requireTLS: port == 587, // Upgrade to TLS for port 587
         auth: {
             user: user,
             pass: pass
