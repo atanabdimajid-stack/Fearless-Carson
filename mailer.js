@@ -3,36 +3,60 @@ const dns = require('dns');
 // Force IPv4 because Render free tier containers often fail to route IPv6 traffic to Google
 dns.setDefaultResultOrder('ipv4first');
 
-// Configure the email transporter using Environment Variables
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 465,
-    secure: process.env.SMTP_PORT == 465, // Use implicit TLS only for port 465
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    },
-    family: 4, // STRICTLY force IPv4 to prevent ENETUNREACH errors on Render
-    tls: {
-        rejectUnauthorized: false
-    }
-});
+const { getSettings } = require('./database');
 
 const sendEmail = async (to, subject, text) => {
-    // If credentials aren't set yet, fallback to mock logger so the app doesn't crash
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        console.log('\n[WARNING] Real email credentials not found in .env file!');
+    // 1. Try to fetch settings from database
+    let host, port, user, pass;
+    try {
+        const dbSettings = await getSettings();
+        if (dbSettings && dbSettings.smtp_user && dbSettings.smtp_pass) {
+            host = dbSettings.smtp_host || 'smtp.gmail.com';
+            port = dbSettings.smtp_port || 465;
+            user = dbSettings.smtp_user;
+            pass = dbSettings.smtp_pass;
+        }
+    } catch(err) {
+        console.error('Failed to fetch settings from DB, falling back to ENV vars', err);
+    }
+
+    // 2. Fallback to Environment Variables
+    if (!user || !pass) {
+        host = process.env.SMTP_HOST || 'smtp.gmail.com';
+        port = process.env.SMTP_PORT || 465;
+        user = process.env.SMTP_USER;
+        pass = process.env.SMTP_PASS;
+    }
+
+    // 3. Fallback to Mock Logger if nothing is configured
+    if (!user || !pass) {
+        console.log('\n[WARNING] Real email credentials not found in Settings or .env file!');
         console.log('✉️  MOCK EMAIL SENT');
         console.log(`To:      ${to}`);
         console.log(`Subject: ${subject}`);
         console.log(`------------------------------------------------------`);
         console.log(`${text}\n`);
-        return;
+        return true;
     }
+
+    // 4. Create dynamic transporter
+    const transporter = nodemailer.createTransport({
+        host: host,
+        port: port,
+        secure: port == 465, // Use implicit TLS only for port 465
+        auth: {
+            user: user,
+            pass: pass
+        },
+        family: 4, // STRICTLY force IPv4
+        tls: {
+            rejectUnauthorized: false
+        }
+    });
 
     try {
         const info = await transporter.sendMail({
-            from: `"Review Engine" <${process.env.SMTP_USER}>`,
+            from: `"Review Engine" <${user}>`,
             to: to,
             subject: subject,
             text: text

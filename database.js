@@ -30,6 +30,15 @@ const initDb = async () => {
                 status VARCHAR(50) DEFAULT 'unresponded',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+            
+            CREATE TABLE IF NOT EXISTS settings (
+                id SERIAL PRIMARY KEY,
+                smtp_host VARCHAR(255),
+                smtp_port VARCHAR(50),
+                smtp_user VARCHAR(255),
+                smtp_pass VARCHAR(255),
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         `);
         console.log('✅ Connected to Cloud PostgreSQL Database & Initialized Tables');
     } catch (err) {
@@ -93,6 +102,23 @@ const saveAiResponse = async (review_id, ai_response) => {
     return result.rows[0];
 };
 
+// --- Settings Functions ---
+
+const getSettings = async () => {
+    const result = await pool.query('SELECT * FROM settings ORDER BY id DESC LIMIT 1');
+    return result.rows[0];
+};
+
+const saveSettings = async (smtp_host, smtp_port, smtp_user, smtp_pass) => {
+    // Delete old settings and insert new to keep it clean (only need 1 row)
+    await pool.query('DELETE FROM settings');
+    const result = await pool.query(
+        'INSERT INTO settings (smtp_host, smtp_port, smtp_user, smtp_pass) VALUES ($1, $2, $3, $4) RETURNING *',
+        [smtp_host, smtp_port, smtp_user, smtp_pass]
+    );
+    return result.rows[0];
+};
+
 module.exports = {
     pool,
     initDb,
@@ -102,5 +128,7 @@ module.exports = {
     getCustomersByStatus,
     getReviews,
     addReview,
-    saveAiResponse
+    saveAiResponse,
+    getSettings,
+    saveSettings
 };

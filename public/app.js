@@ -215,5 +215,52 @@ document.getElementById('mockReviewForm').addEventListener('submit', async (e) =
     }
 });
 
-// Init
+// --- Settings Management ---
+async function fetchSettings() {
+    try {
+        const res = await fetch('/api/settings');
+        const settings = await res.json();
+        if (settings.smtp_host) document.getElementById('smtpHost').value = settings.smtp_host;
+        if (settings.smtp_port) document.getElementById('smtpPort').value = settings.smtp_port;
+        if (settings.smtp_user) document.getElementById('smtpUser').value = settings.smtp_user;
+        if (settings.smtp_pass) document.getElementById('smtpPass').value = settings.smtp_pass;
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+    }
+}
+
+document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+    const host = document.getElementById('smtpHost').value;
+    const port = document.getElementById('smtpPort').value;
+    const user = document.getElementById('smtpUser').value;
+    const pass = document.getElementById('smtpPass').value;
+    const btn = document.getElementById('saveSettingsBtn');
+    
+    btn.disabled = true;
+    btn.innerText = 'Saving...';
+    
+    try {
+        await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                smtp_host: host,
+                smtp_port: port,
+                smtp_user: user,
+                smtp_pass: pass
+            })
+        });
+        const msg = document.getElementById('settingsMsg');
+        msg.style.display = 'block';
+        setTimeout(() => msg.style.display = 'none', 3000);
+    } catch (err) {
+        alert('Failed to save settings');
+    }
+    btn.disabled = false;
+    btn.innerText = 'Save Settings';
+});
+
+// Initial Fetch
 fetchCustomers();
+fetchReviews();
+fetchSettings();

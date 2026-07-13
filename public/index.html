@@ -104,18 +104,39 @@
                 </div>
             </div>
 
-            <!-- SETTINGS VIEW -->
-            <div id="settings-view" class="view-section">
+            <!-- Settings View -->
+            <section id="settings-view" class="view-section">
                 <header>
-                    <div>
-                        <h1>Settings</h1>
-                        <p class="subtitle">Configure your workspace</p>
-                    </div>
+                    <h2>Settings</h2>
+                    <p>Configure your email provider and API keys.</p>
                 </header>
-                <div class="panel" style="padding: 2rem;">
-                    <p style="color: var(--text-muted);">Settings are coming soon. For now, you can configure your email and database credentials inside your <code>.env</code> file.</p>
+
+                <div class="card" style="max-width: 600px;">
+                    <h3 style="margin-bottom: 1.5rem;">Email Configuration</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                        Bypass Render's environment variables completely. Save your SMTP or API credentials here to send emails directly from the app. We recommend using <a href="https://brevo.com" target="_blank" style="color: var(--primary-color);">Brevo</a>.
+                    </p>
+
+                    <div class="form-group">
+                        <label>SMTP Host</label>
+                        <input type="text" id="smtpHost" placeholder="e.g., smtp-relay.brevo.com">
+                    </div>
+                    <div class="form-group">
+                        <label>SMTP Port</label>
+                        <input type="text" id="smtpPort" placeholder="e.g., 587">
+                    </div>
+                    <div class="form-group">
+                        <label>SMTP Username (Email)</label>
+                        <input type="text" id="smtpUser" placeholder="Your login email">
+                    </div>
+                    <div class="form-group">
+                        <label>SMTP Password (API Key)</label>
+                        <input type="password" id="smtpPass" placeholder="Your master password or app password">
+                    </div>
+                    <button class="btn primary" id="saveSettingsBtn">Save Settings</button>
+                    <div id="settingsMsg" style="margin-top: 1rem; color: #10b981; display: none;">✅ Settings saved successfully!</div>
                 </div>
-            </div>
+            </section>
 
         </main>
     </div>

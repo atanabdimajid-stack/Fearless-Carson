@@ -82,6 +82,28 @@ app.post('/api/reviews', async (req, res) => {
     }
 });
 
+// --- Settings Routes ---
+const { getSettings, saveSettings } = require('./database');
+
+app.get('/api/settings', async (req, res) => {
+    try {
+        const settings = await getSettings();
+        res.json(settings || {});
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/settings', async (req, res) => {
+    const { smtp_host, smtp_port, smtp_user, smtp_pass } = req.body;
+    try {
+        const settings = await saveSettings(smtp_host, smtp_port, smtp_user, smtp_pass);
+        res.status(200).json(settings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // CRON WEBHOOK
 // Free tier external services (like cron-job.org) should hit this endpoint
 // every 15 minutes to wake up the server and process the email queue
