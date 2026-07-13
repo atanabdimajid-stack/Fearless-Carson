@@ -73,7 +73,6 @@ async function fetchPipeline() {
         
         const columns = [
             { id: 'pending', title: 'Pending (Wait)' },
-            { id: 'checkin_sent', title: 'Check-in Sent' },
             { id: 'ask_sent', title: 'Review Ask Sent' },
             { id: 'nudge_sent', title: 'Nudge Sent' },
             { id: 'responded', title: 'Responded / Reviewed' }
@@ -144,7 +143,6 @@ async function fetchReviews() {
 function formatStatus(status) {
     const map = {
         'pending': '⏳ Pending',
-        'checkin_sent': '✉️ Check-in Sent',
         'ask_sent': '⭐ Ask Sent',
         'nudge_sent': '🔔 Nudge Sent',
         'completed': '✅ Completed',

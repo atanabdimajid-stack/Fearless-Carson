@@ -42,11 +42,11 @@ body::before {
 
 /* Sidebar */
 .sidebar {
-    width: 260px;
+    width: 220px;
     background-color: var(--glass-bg);
     backdrop-filter: blur(12px);
     border-right: 1px solid var(--glass-border);
-    padding: 2rem;
+    padding: 2rem 1.5rem;
     display: flex;
     flex-direction: column;
 }
@@ -98,7 +98,7 @@ nav a:hover, nav a.active {
 /* Main Content & SPA Views */
 .content {
     flex: 1;
-    padding: 2rem 4rem;
+    padding: 2rem 3rem;
     position: relative;
 }
 
