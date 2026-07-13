@@ -1,7 +1,7 @@
 const { GoogleGenAI } = require('@google/genai');
 
-const ai = new GoogleGenAI({
-    // It automatically picks up the GEMINI_API_KEY environment variable.
+const ai = new GoogleGenAI({ 
+    apiKey: process.env.GEMINI_API_KEY 
 });
 
 /**
@@ -13,7 +13,7 @@ const ai = new GoogleGenAI({
  */
 const generateReviewResponse = async (customerName, reviewText, rating) => {
     if (!process.env.GEMINI_API_KEY) {
-        console.warn('[AI] GEMINI_API_KEY is not set. Generating fallback response.');
+        console.warn('\n[AI] WARNING: GEMINI_API_KEY is missing! Using generic fallback response.');
         return `Thank you so much for your review, ${customerName}! We really appreciate your business.`;
     }
 
@@ -31,6 +31,7 @@ const generateReviewResponse = async (customerName, reviewText, rating) => {
     `;
 
     try {
+        console.log(`[AI] Requesting custom response from Gemini for ${customerName}...`);
         const response = await ai.models.generateContent({
             model: 'gemini-1.5-flash',
             contents: prompt,
@@ -38,9 +39,13 @@ const generateReviewResponse = async (customerName, reviewText, rating) => {
                 temperature: 0.7,
             }
         });
+        console.log(`[AI] Successfully generated custom response!`);
         return response.text;
     } catch (error) {
-        console.error('[AI] Error generating response from Gemini:', error);
+        console.error('\n=============================================');
+        console.error('❌ [AI] FATAL GEMINI ERROR:');
+        console.error(error.message || error);
+        console.error('=============================================\n');
         return `Thank you for your feedback, ${customerName}! We appreciate it.`;
     }
 };
