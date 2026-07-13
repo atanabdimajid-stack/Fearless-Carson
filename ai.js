@@ -32,9 +32,10 @@ const generateReviewResponse = async (customerName, reviewText, rating) => {
     `;
 
     try {
-        console.log(`[AI] Requesting custom response from Gemini for ${customerName}...`);
+        const modelName = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
+        console.log(`[AI] Requesting custom response from Gemini (${modelName}) for ${customerName}...`);
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash-8b', // Switch to robust 8b model
+            model: modelName,
             contents: prompt,
             config: {
                 temperature: 0.7,
