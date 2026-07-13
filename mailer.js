@@ -39,7 +39,34 @@ const sendEmail = async (to, subject, text) => {
         return true;
     }
 
-    // 4. Create dynamic transporter
+    // 4. If using Brevo, use their HTTP API (Port 443) to completely bypass Render's SMTP firewall
+    if (host.includes('brevo')) {
+        console.log(`🚀 Sending email via Brevo HTTP API to bypass Render firewall...`);
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': pass, // Brevo uses the password/API key here
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: { email: user, name: "Review Engine" },
+                to: [{ email: to }],
+                subject: subject,
+                textContent: text
+            })
+        });
+        
+        if (!response.ok) {
+            const errData = await response.json();
+            console.error(`❌ Brevo API Error:`, errData);
+            throw new Error(`Brevo API Error: ${JSON.stringify(errData)}`);
+        }
+        console.log(`✅ Email sent successfully via Brevo API to ${to}`);
+        return true;
+    }
+
+    // 5. Fallback to traditional SMTP (Will likely be blocked by Render free tier)
     const transporter = nodemailer.createTransport({
         host: host,
         port: port,
